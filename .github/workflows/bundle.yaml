@@ -10,12 +10,8 @@ jobs:
     name: release
     runs-on: ubuntu-latest
     steps:
-    - name: Docker Login
-      uses: docker/login-action@v1
-      with:
-        registry: quay.io
-        username: ${{ secrets.QUAY_USERNAME }}
-        password: ${{ secrets.QUAY_PASSWORD }}
+    - name: Checkout
+      uses: actions/checkout@v2
 
     - name: Set the release related variables
       run: |
@@ -25,11 +21,17 @@ jobs:
         else
           echo BUNDLE_TAG="$(git describe --tags --always)" >> $GITHUB_ENV
         fi
-        echo BUNDLE="quay.io/operator-framework/combo-bundle:${BUNDLE_TAG}" >> $GITHUB_ENV
+        echo BUNDLE_REPO="quay.io/tflannag/combo" >> $GITHUB_ENV
+
+    - name: Print out relevant environment variables
+      run: |
+        echo "${{ env.BUNDLE_REPO }}"
+        echo "${{ env.BUNDLE_TAG }}"
 
     - name: Build and push bundle
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v2
       with:
-        file: Dockerfile.plainbundle
-        tags: ${{ env.BUNDLE }}
+        context: ./
+        file: ./Dockerfile.plainbundle
+        tags: ${{ env.BUNDLE_REPO }}:${{ env.BUNDLE_TAG }}
         github-token: ${{ github.token }}
